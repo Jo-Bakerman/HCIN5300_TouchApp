@@ -1,2 +1,4 @@
-HCIN5300_TouchApp
-=================
+HCIN5300 Graduate Project
+=========================
+
+An Android Touch Application.
