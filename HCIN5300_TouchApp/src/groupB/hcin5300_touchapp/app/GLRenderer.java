@@ -2,34 +2,21 @@ package groupB.hcin5300_touchapp.app;
 
 import groupB.hcin5300_touchapp.utils.Vector3D;
 import groupB.hcin5300_touchapp.utils.CubeShaders;
-import groupB.hcin5300_touchapp.utils.LineShaders;
 import groupB.hcin5300_touchapp.utils.SampleUtils;
 import groupB.hcin5300_touchapp.utils.Texture;
 import groupB.hcin5300_touchapp.utils.TexturedRectangle;
 
-import java.io.FileWriter;
-import java.nio.Buffer;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
-import java.nio.ShortBuffer;
-import java.util.Calendar;
 import java.util.Vector;
  
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.opengl.GLES20;
-import android.opengl.GLSurfaceView.Renderer;
 import android.opengl.GLSurfaceView;
-import android.opengl.GLUtils;
 import android.opengl.Matrix;
-import android.os.Environment;
 import android.util.Log;
 import android.view.Display;
 import android.view.MotionEvent;
@@ -53,10 +40,6 @@ public class GLRenderer implements GLSurfaceView.Renderer {
     private int textureCoordHandle = 0;
     private int mvpMatrixHandle = 0;
     private int texSampler2DHandle = 0;
-    
-    private int lineOpacityHandle = 0;
-    private int lineColorHandle = 0;
-    private int mvpMatrixButtonsHandle = 0;
  
     // Our screenresolution
     int mScreenWidth;
@@ -191,8 +174,19 @@ public class GLRenderer implements GLSurfaceView.Renderer {
     		TexturedRectangle meshObj, Texture meshTex)
     {
         float[] modelViewMatrix = new float[16];
-        //float[] modelViewProjection = new float[16];
         
+        final float eyeX = 0.0f;
+        final float eyeY = 0.0f;
+        final float eyeZ = 1.5f;
+        final float lookX = 0.0f;
+        final float lookY = 0.0f;
+        final float lookZ = -5.0f;    
+        final float upX = 0.0f;
+        final float upY = 1.0f;
+        final float upZ = 0.0f;
+          
+        Matrix.setLookAtM(modelViewMatrix, 0, eyeX, eyeY, eyeZ, 
+        		lookX, lookY, lookZ, upX, upY, upZ);       
         Matrix.translateM(modelViewMatrix, 0, 
     				tr.x, tr.y, tr.z);       
         Matrix.scaleM(modelViewMatrix, 0, 
@@ -230,51 +224,51 @@ public class GLRenderer implements GLSurfaceView.Renderer {
     	case 1: 
     		if(elementIndex == 0) //Ag  	
     		{
-    			
+    			texIndx = 1;
     		}
     		else //Pb
     		{
-    			
+    			texIndx = 6;
     		}  			
     		break;
     	case 2: 
     		if(elementIndex == 0) //Ag  	
     		{
-    			
+    			texIndx = 2;
     		}
     		else //Pb
     		{
-    			
+    			texIndx = 7;
     		}
     		break;
     	case 3: 
     		if(elementIndex == 0) //Ag  	
     		{
-    			
+    			texIndx = 3;
     		}
     		else //Pb
     		{
-    			
+    			texIndx = 8;
     		}
     		break;
     	case 4:
     		if(elementIndex == 0) //Ag
     		{
-    			
+    			texIndx = 4;
     		}
     		else //Pb
     		{
-    			
+    			texIndx = 9;
     		}
     		break;
     	case 5:
     		if(elementIndex == 0) //Ag
     		{
-    			
+    			texIndx = 5;
     		}
     		else //Pb
     		{
-    			
+    			texIndx = 10;
     		}
     		break;
     	}
@@ -283,20 +277,17 @@ public class GLRenderer implements GLSurfaceView.Renderer {
     
     public void applyElementsFrame()
     {
-    	
+    	TexturedRectangle meshObj1 = new TexturedRectangle();
+    	TexturedRectangle meshObj2 = new TexturedRectangle();
+		Texture meshTex = mTextures.get(1);
+		Vector3D tr1 = new Vector3D(0.0f, 0.0f, 0.0f);
+		Vector3D tr2 = new Vector3D(0.0f, 0.0f, 0.0f);
+		Vector3D sc = new Vector3D(mScreenWidth, mScreenHeight, 0.0f);
+		
+		StartDraw(tr1, sc, meshObj1, meshTex);
+		StartDraw(tr2, sc, meshObj2, meshTex);
     }
-    
-    private Buffer fillBuffer(float[] array)
-    {
-        ByteBuffer bb = ByteBuffer.allocateDirect(4 * array.length);
-        bb.order(ByteOrder.LITTLE_ENDIAN);
-        for (float d : array)
-            bb.putFloat(d);
-        bb.rewind();
-        
-        return bb;      
-    } 
-    
+      
     public void setTextures(Vector<Texture> textures)
     {
         mTextures = textures;       

@@ -53,6 +53,10 @@ public class MainActivity extends Activity {
     {
         Log.d(LOGTAG, "onCreate");
         super.onCreate(savedInstanceState);
+        
+        getWindow().setFlags(
+                WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON,
+                WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         startLoadingAnimation();
         // Load any sample specific textures:
@@ -67,11 +71,44 @@ public class MainActivity extends Activity {
     
     private void loadTextures()
     {
-    	mTextures.add(Texture.loadTextureFromApk("periodic_table4.png",
+    	mTextures.add(Texture.loadTextureFromApk("periodic_table4.jpg",
                 getAssets())); // 0
+    	
+    	//Ag
+//    	mTextures.add(Texture.loadTextureFromApk("periodic_table4.jpg",
+//                getAssets())); // 1
+//    	
+//    	mTextures.add(Texture.loadTextureFromApk("periodic_table4.jpg",
+//                getAssets())); // 2
+//    	
+//    	mTextures.add(Texture.loadTextureFromApk("periodic_table4.jpg",
+//                getAssets())); // 3
+//    	
+//    	mTextures.add(Texture.loadTextureFromApk("periodic_table4.jpg",
+//                getAssets())); // 4
+//    	
+//    	mTextures.add(Texture.loadTextureFromApk("periodic_table4.jpg",
+//                getAssets())); // 5
+    	
+    	//Pb
+//    	mTextures.add(Texture.loadTextureFromApk("periodic_table4.jpg",
+//                getAssets())); // 6
+//    	
+//    	mTextures.add(Texture.loadTextureFromApk("periodic_table4.jpg",
+//                getAssets())); // 7
+//    	
+//    	mTextures.add(Texture.loadTextureFromApk("periodic_table4.jpg",
+//                getAssets())); // 8
+//    	
+//    	mTextures.add(Texture.loadTextureFromApk("periodic_table4.jpg",
+//                getAssets())); // 9
+//    	
+//    	mTextures.add(Texture.loadTextureFromApk("periodic_table4.jpg",
+//                getAssets())); // 10
         
+    	
         mTextures.add(Texture.loadTextureFromApk("selection.png",
-                getAssets())); // 1
+                getAssets())); // 11
     }
     
     protected void onResume()
