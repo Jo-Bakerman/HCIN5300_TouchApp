@@ -13,16 +13,18 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Point;
-import android.graphics.RectF;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
 import android.opengl.GLSurfaceView.Renderer;
 import android.opengl.Matrix;
+import android.util.Log;
 import android.view.Display;
 import android.view.MotionEvent;
 import android.view.WindowManager;
 
 public class GLRenderer implements Renderer {
+	
+	private static final String LOGTAG = "GLRenderer";
 
 	// Our matrices
 	private final float[] mtrxProjection = new float[16];
@@ -46,21 +48,33 @@ public class GLRenderer implements Renderer {
 	int mtrxhandle;
 	int mSamplerLoc;
 
-	int textureIndx = 0;
-	int texCount = 11;
+	boolean elementSelected = false;
+	int elementNo = -1;
+	int currLevel = 1;
+	int textureIndx = 0;	
+	int texCount = 12;
 	String[] fileName = {"periodic_table4",
-			"ag1", "ag2", "ag3", "ag4", "ag5",
-			"pb1", "pb2", "pb3", "pb4", "pb5"};
+			"ag1", "ag2", "ag3", "ag4", "ag5", //Ag texture range [1-5]
+			"pb1", "pb2", "pb3", "pb4", "pb5", //Pb texture range [6-10]
+			"selection"};
 	Vector<int[]> IDs;
+	final int AG1 = 1;
+	final int AG2 = 2;
+	final int AG3 = 3;
+	final int AG4 = 4;
+	final int AG5 = 5;
+	final int PB1 = 6;
+	final int PB2 = 7;
+	final int PB3 = 8;
+	final int PB4 = 9;
+	final int PB5 = 10;
 	
 	// Our screenresolution
-	float	mScreenWidth; // = 1280;
-	float	mScreenHeight; // = 768;
+	public static float mScreenWidth; // = 1280;
+	public static float mScreenHeight; // = 768;
 
 	// Misc
 	Context mContext;
-	long mLastTime;
-	int mProgram;
 	
 	//touch timer
 	boolean touchEnabled = true;
@@ -79,7 +93,6 @@ public class GLRenderer implements Renderer {
 	public GLRenderer(Context c)
 	{
 		mContext = c;
-		mLastTime = System.currentTimeMillis() + 100;
 		
 		WindowManager wm = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
 		Display display = wm.getDefaultDisplay();
@@ -97,13 +110,14 @@ public class GLRenderer implements Renderer {
 	
 	public void initTouchCoords()
 	{
-		ag = new TouchCoords(0.575f, 0.56f, 0.628f, 0.45f);
-		pb = new TouchCoords(0.727f, 0.462f, 0.780f, 0.352f);
-		l1 = new TouchCoords(0.045f, 0.160f, 0.159f, 0.07f);
-		l2 = new TouchCoords(0.197f, 0.160f, 0.311f, 0.07f);
-		l3 = new TouchCoords(0.349f, 0.160f, 0.463f, 0.07f);
-		l4 = new TouchCoords(0.695f, 0.160f, 0.809f, 0.07f);
-		l5 = new TouchCoords(0.847f, 0.160f, 0.961f, 0.07f);
+		//touch coordinates increase from top to left (unlike texture coordinates)
+		ag = new TouchCoords(0.575f, 0.44f, 0.628f, 0.55f);
+		pb = new TouchCoords(0.729f, 0.546f, 0.782f, 0.656f);
+		l1 = new TouchCoords(0.045f, 0.84f, 0.159f, 0.93f);
+		l2 = new TouchCoords(0.197f, 0.84f, 0.311f, 0.93f);
+		l3 = new TouchCoords(0.349f, 0.84f, 0.463f, 0.93f);
+		l4 = new TouchCoords(0.695f, 0.84f, 0.809f, 0.93f);
+		l5 = new TouchCoords(0.847f, 0.84f, 0.961f, 0.93f);
 	}
 	
 	public void loadBuffers()
@@ -126,10 +140,10 @@ public class GLRenderer implements Renderer {
 	//test function
 	public void testBuffers()
 	{
-		float l = mScreenWidth*0.847f;
-		float t = mScreenHeight*0.160f;
-		float r = mScreenWidth*0.961f;
-		float b = mScreenHeight*0.07f;
+		float l = pb.l;
+		float t = pb.tt;
+		float r = pb.r;
+		float b = pb.tb;
 		tv = new float[] {
 				l, t, 0.0f,
 				l, b, 0.0f,
@@ -151,26 +165,18 @@ public class GLRenderer implements Renderer {
 	public void onResume()
 	{
 		/* Do stuff to resume the renderer */
-		mLastTime = System.currentTimeMillis();
 	}
 	
 	@Override
 	public void onDrawFrame(GL10 unused) {
 		
 		// Get the current time
-    	long now = System.currentTimeMillis();
-    	
-    	// We should make sure we are valid and sane
-    	if (mLastTime > now) return;
-    	
+    	long now = System.currentTimeMillis();   	
     	if((now - lastTouch) >= touchOffset)
     		touchEnabled = true;
 		
 		// Render our example
-		Render(mtrxProjectionAndView);
-		
-		// Save the current time to see how long it took :).
-        mLastTime = now;		
+		Render(mtrxProjectionAndView);		
 	}
 	
 	private void Render(float[] m) {
@@ -252,7 +258,7 @@ public class GLRenderer implements Renderer {
 	    
 	    GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 	    GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 
-        		IDs.get(1)[0]);
+        		IDs.get(11)[0]);
 	    
         // Apply the projection and view transformation
         GLES20.glUniformMatrix4fv(mtrxhandle, 1, false, m, 0);       
@@ -298,13 +304,13 @@ public class GLRenderer implements Renderer {
 
 	@Override
 	public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+		
 		IDs = new Vector<int[]>();
 		for(int j=0;j<texCount;++j)
 		{
 			IDs.add(new int[1]);
 		}
-		// Create the triangles
-		SetupTriangle();
+		
 		// Create the image information
 		SetupImage();
 		
@@ -355,24 +361,99 @@ public class GLRenderer implements Renderer {
 		float ty = event.getY();
 		
 		if(touchEnabled){
-			//textureIndx = 1 - textureIndx;
+			
+			if(elementSelected && elementNo > 0)
+			{
+				//check if any of the buttons is pressed
+				int buttonSelected = getPressedButton(tx, ty);
+				switch(buttonSelected) //determine which level is selected
+				{
+				case 1:
+					textureIndx = elementNo == 1 ? AG1 : PB1;
+					currLevel = 1;
+					break;
+				case 2: 
+					textureIndx = elementNo == 1 ? AG2 : PB2;
+					currLevel = 2;
+					break;
+				case 3:
+					textureIndx = elementNo == 1 ? AG3 : PB3;
+					currLevel = 3;
+					break;
+				case 4: 
+					textureIndx = elementNo == 1 ? AG4 : PB4;
+					currLevel = 4;
+					break;
+				case 5:
+					textureIndx = elementNo == 1 ? AG5 : PB5;
+					currLevel = 5;
+					break;
+				}
+			}
+			else //check for element selection
+			{
+				if(IsPressed(ag, tx, ty)) //Ag is selected
+				{
+					elementNo = 1;
+					currLevel = 1;
+					textureIndx = AG1;
+					elementSelected = true;				
+				}
+				else
+				{
+					if(IsPressed(pb, tx, ty)) //Pb is selected
+					{
+						elementNo = 2;
+						currLevel = 1;
+						textureIndx = PB1;
+						elementSelected = true;
+					}
+				}
+			}
+			
 			lastTouch = System.currentTimeMillis();
 			touchEnabled = false;
 		}
 	}
 	
+	public int getPressedButton(float tx, float ty)
+	{
+		if(IsPressed(l1, tx, ty))
+			return 1;
+		if(IsPressed(l2, tx, ty))
+			return 2;
+		if(IsPressed(l3, tx, ty))
+			return 3;
+		if(IsPressed(l4, tx, ty))
+			return 4;
+		if(IsPressed(l5, tx, ty))
+			return 5;
+		
+		return 0; //nothing is pressed
+	}
+	
+	public boolean IsPressed(TouchCoords q, float tx, float ty)
+	{		
+		float l = q.l;
+		float t = q.t;
+		float r = q.r;
+		float b = q.b;
+		
+		if(l<=tx && tx<=r && t<=ty && ty<=b)
+			return true;
+		
+		return false;
+	}
+	
 	public void SetupImage()
 	{
 		// The texture buffer
-		ByteBuffer bb = ByteBuffer.allocateDirect(uvs.length * 4);
-		bb.order(ByteOrder.nativeOrder());
-		uvBuffer = bb.asFloatBuffer();
+		ByteBuffer tb = ByteBuffer.allocateDirect(uvs.length * 4);
+		tb.order(ByteOrder.nativeOrder());
+		uvBuffer = tb.asFloatBuffer();
 		uvBuffer.put(uvs);
 		uvBuffer.position(0);	
-	}
-
-	public void SetupTriangle()
-	{
+		
 		// The vertex buffer.
 		ByteBuffer bb = ByteBuffer.allocateDirect(vertices.length * 4);
 		bb.order(ByteOrder.nativeOrder());
