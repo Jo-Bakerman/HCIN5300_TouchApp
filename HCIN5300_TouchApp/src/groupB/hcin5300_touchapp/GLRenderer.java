@@ -1,9 +1,13 @@
 package groupB.hcin5300_touchapp;
 
+import groupB.hcin5300_touchapp.AboutScreen;
+
+import java.io.FileWriter;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
+import java.util.Calendar;
 import java.util.Vector;
 
 import javax.microedition.khronos.egl.EGLConfig;
@@ -17,6 +21,7 @@ import android.opengl.GLES20;
 import android.opengl.GLUtils;
 import android.opengl.GLSurfaceView.Renderer;
 import android.opengl.Matrix;
+import android.os.Environment;
 import android.util.Log;
 import android.view.Display;
 import android.view.MotionEvent;
@@ -89,6 +94,11 @@ public class GLRenderer implements Renderer {
 	TouchCoords l3;
 	TouchCoords l4;
 	TouchCoords l5;
+	
+    // Log File Variables
+    String participant = AboutScreen.message;
+    String filename = participant.replace(" ", "");
+	//Calendar cal = Calendar.getInstance();
 	
 	public GLRenderer(Context c)
 	{
@@ -353,6 +363,26 @@ public class GLRenderer implements Renderer {
 	    
 	    // Set our shader programm
 		GLES20.glUseProgram(riGraphicTools.sp_Image);
+		
+		// Write to File   
+        try
+        {
+	        // Write Header - Date/Time, Participant Name, Test Type
+        	// File location : Public Downloads folder
+        	//cal = cal.getInstance();
+        	Calendar cal = Calendar.getInstance();
+        	String dateTime = cal.getTime().toString();
+        	//dateTime += ":" + Integer.toString(cal.get(Calendar.SECOND));
+        	String fileHead = dateTime + "\n" + participant + "\n" + "Touch Test";
+        	
+        	FileWriter fw = new FileWriter(Environment.getExternalStoragePublicDirectory
+        			(Environment.DIRECTORY_DOWNLOADS).toString() + "/" + filename + ".txt", true);
+	        fw.append( fileHead + "\n");
+	        fw.close();
+	        //Log.d("FileWriter","File was Created");
+        } catch (Exception e) {
+            Log.e("FileWriter","Did Not Create File " + filename );
+        }
 	}
 	
 	public void processTouchEvent(MotionEvent event)
@@ -362,32 +392,44 @@ public class GLRenderer implements Renderer {
 		
 		if(touchEnabled){
 			
-			if(elementSelected && elementNo > 0)
+			if(elementSelected)
 			{
+				if(elementNo > 0){
 				//check if any of the buttons is pressed
 				int buttonSelected = getPressedButton(tx, ty);
 				switch(buttonSelected) //determine which level is selected
 				{
 				case 1:
 					textureIndx = elementNo == 1 ? AG1 : PB1;
+					if(currLevel != 1)
+		    			addLogEntry();
 					currLevel = 1;
 					break;
 				case 2: 
 					textureIndx = elementNo == 1 ? AG2 : PB2;
+					if(currLevel != 2)
+		    			addLogEntry();
 					currLevel = 2;
 					break;
 				case 3:
 					textureIndx = elementNo == 1 ? AG3 : PB3;
+					if(currLevel != 3)
+		    			addLogEntry();
 					currLevel = 3;
 					break;
 				case 4: 
 					textureIndx = elementNo == 1 ? AG4 : PB4;
+					if(currLevel != 4)
+		    			addLogEntry();
 					currLevel = 4;
 					break;
 				case 5:
 					textureIndx = elementNo == 1 ? AG5 : PB5;
+					if(currLevel != 5)
+		    			addLogEntry();
 					currLevel = 5;
 					break;
+				}
 				}
 			}
 			else //check for element selection
@@ -396,8 +438,21 @@ public class GLRenderer implements Renderer {
 				{
 					elementNo = 1;
 					currLevel = 1;
+					// Add Selected Element to File
+	    			try
+	    	        {
+	    	        	FileWriter fw = new FileWriter
+	    	        			(Environment.getExternalStoragePublicDirectory
+	    	        					(Environment.DIRECTORY_DOWNLOADS).toString() + "/" + filename + ".txt", true);
+	    		        fw.append("Ag\n");
+	    		        fw.append("-----\n");
+	    		        fw.close();
+	    		        //Log.d("FileWriter","File was Appended");
+	    	        } catch (Exception e) {
+	    	        	Log.e("FileWriter","Did Not Create File2");
+	    	        }
 					textureIndx = AG1;
-					elementSelected = true;				
+					elementSelected = true;	
 				}
 				else
 				{
@@ -405,6 +460,19 @@ public class GLRenderer implements Renderer {
 					{
 						elementNo = 2;
 						currLevel = 1;
+						// Add Selected Element to File
+		    			try
+		    	        {
+		    	        	FileWriter fw = new FileWriter
+		    	        			(Environment.getExternalStoragePublicDirectory
+		    	        					(Environment.DIRECTORY_DOWNLOADS).toString() + "/" + filename + ".txt", true);
+		    		        fw.append("Pb\n");
+		    		        fw.append("-----\n");
+		    		        fw.close();
+		    		        //Log.d("FileWriter","File was Appended");
+		    	        } catch (Exception e) {
+		    	        	Log.e("FileWriter","Did Not Create File2");
+		    	        }
 						textureIndx = PB1;
 						elementSelected = true;
 					}
@@ -468,4 +536,22 @@ public class GLRenderer implements Renderer {
 		drawListBuffer.put(indices);
 		drawListBuffer.position(0);
 	}
+	
+	private void addLogEntry()
+    {
+    	try
+        {
+			// **** Stores Previous Level & End Time of Prev Level
+			Calendar cal = Calendar.getInstance();
+			String dateTime = cal.getTime().toString();
+			String newLine = dateTime + ", " + "Touch" + ", " + participant + ", " + Integer.toString(currLevel) + "\n";
+			
+        	FileWriter fw = new FileWriter(Environment.getExternalStoragePublicDirectory
+        			(Environment.DIRECTORY_DOWNLOADS).toString() + "/" + filename + ".txt", true);
+	        fw.append(newLine);
+	        fw.close();
+        } catch (Exception e) {
+        	Log.e("FileWriter","Did Not Create File2");
+        }
+    }
 }
