@@ -36,10 +36,21 @@ public class GLRenderer implements Renderer {
 	public FloatBuffer vertexBuffer;
 	public ShortBuffer drawListBuffer;
 	public FloatBuffer uvBuffer;
+	
+	//test buffers
+	public static float tv[];
+	public FloatBuffer tvb;
+	
+	int mPositionHandle;
+	int mTexCoordLoc;
+	int mtrxhandle;
+	int mSamplerLoc;
 
 	int textureIndx = 0;
-	int texCount = 2;
-	String[] fileName = {"periodic_table4", "selection"};
+	int texCount = 11;
+	String[] fileName = {"periodic_table4",
+			"ag1", "ag2", "ag3", "ag4", "ag5",
+			"pb1", "pb2", "pb3", "pb4", "pb5"};
 	Vector<int[]> IDs;
 	
 	// Our screenresolution
@@ -56,6 +67,15 @@ public class GLRenderer implements Renderer {
 	long lastTouch = -1;
 	long touchOffset = 250; //in milliseconds
 	
+	//touch coordinates
+	TouchCoords ag;
+	TouchCoords pb;
+	TouchCoords l1;
+	TouchCoords l2;
+	TouchCoords l3;
+	TouchCoords l4;
+	TouchCoords l5;
+	
 	public GLRenderer(Context c)
 	{
 		mContext = c;
@@ -68,7 +88,22 @@ public class GLRenderer implements Renderer {
 		mScreenWidth = size.x;
 		mScreenHeight = size.y;
 		
+		initTouchCoords();
 		loadBuffers();
+		
+		//test 
+		//testBuffers();
+	}
+	
+	public void initTouchCoords()
+	{
+		ag = new TouchCoords(0.575f, 0.56f, 0.628f, 0.45f);
+		pb = new TouchCoords(0.727f, 0.462f, 0.780f, 0.352f);
+		l1 = new TouchCoords(0.045f, 0.160f, 0.159f, 0.07f);
+		l2 = new TouchCoords(0.197f, 0.160f, 0.311f, 0.07f);
+		l3 = new TouchCoords(0.349f, 0.160f, 0.463f, 0.07f);
+		l4 = new TouchCoords(0.695f, 0.160f, 0.809f, 0.07f);
+		l5 = new TouchCoords(0.847f, 0.160f, 0.961f, 0.07f);
 	}
 	
 	public void loadBuffers()
@@ -86,6 +121,26 @@ public class GLRenderer implements Renderer {
 				1.0f, 0.0f			
 	    };
 		
+	}
+	
+	//test function
+	public void testBuffers()
+	{
+		float l = mScreenWidth*0.847f;
+		float t = mScreenHeight*0.160f;
+		float r = mScreenWidth*0.961f;
+		float b = mScreenHeight*0.07f;
+		tv = new float[] {
+				l, t, 0.0f,
+				l, b, 0.0f,
+				r, b, 0.0f,
+				r, t, 0.0f };
+		// The vertex buffer.
+		ByteBuffer bb = ByteBuffer.allocateDirect(tv.length * 4);
+		bb.order(ByteOrder.nativeOrder());
+		tvb = bb.asFloatBuffer();
+		tvb.put(tv);
+		tvb.position(0);
 	}
 	
 	public void onPause()
@@ -115,8 +170,7 @@ public class GLRenderer implements Renderer {
 		Render(mtrxProjectionAndView);
 		
 		// Save the current time to see how long it took :).
-        mLastTime = now;
-		
+        mLastTime = now;		
 	}
 	
 	private void Render(float[] m) {
@@ -131,11 +185,16 @@ public class GLRenderer implements Renderer {
         GLES20.glDisable(GLES20.GL_CULL_FACE);
         
         // get handle to vertex shader's vPosition member
-	    int mPositionHandle = GLES20.glGetAttribLocation(riGraphicTools.sp_Image, "vPosition");
+	    mPositionHandle = GLES20.glGetAttribLocation(riGraphicTools.sp_Image, "vPosition");
 	    // Get handle to texture coordinates location
-	    int mTexCoordLoc = GLES20.glGetAttribLocation(riGraphicTools.sp_Image, "a_texCoord" );
+	    mTexCoordLoc = GLES20.glGetAttribLocation(riGraphicTools.sp_Image, "a_texCoord" );
 	    // Get handle to shape's transformation matrix
-        int mtrxhandle = GLES20.glGetUniformLocation(riGraphicTools.sp_Image, "uMVPMatrix");
+        mtrxhandle = GLES20.glGetUniformLocation(riGraphicTools.sp_Image, "uMVPMatrix");       
+        // Get handle to textures locations
+        mSamplerLoc = GLES20.glGetUniformLocation (riGraphicTools.sp_Image, "s_texture" );
+        
+        //test
+        //DrawTestCoords(m);
 	    
 	    // Enable generic vertex attribute array
 	    GLES20.glEnableVertexAttribArray(mPositionHandle);
@@ -149,9 +208,7 @@ public class GLRenderer implements Renderer {
 	    // Prepare the texturecoordinates
 	    GLES20.glVertexAttribPointer ( mTexCoordLoc, 2, GLES20.GL_FLOAT,
                 false, 
-                0, uvBuffer);
-	    // Get handle to textures locations
-        int mSamplerLoc = GLES20.glGetUniformLocation (riGraphicTools.sp_Image, "s_texture" ); 
+                0, uvBuffer); 
 	    
 	    GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 	    GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 
@@ -165,15 +222,51 @@ public class GLRenderer implements Renderer {
         // Draw the triangle
         GLES20.glDrawElements(GLES20.GL_TRIANGLES, indices.length,
                 GLES20.GL_UNSIGNED_SHORT, drawListBuffer);
-
+        
         // Disable vertex array
         GLES20.glDisableVertexAttribArray(mPositionHandle);
-        GLES20.glDisableVertexAttribArray(mTexCoordLoc);  
+        GLES20.glDisableVertexAttribArray(mTexCoordLoc);              
         
         GLES20.glDisable(GLES20.GL_BLEND);
         GLES20.glDisable(GLES20.GL_DEPTH_TEST);
 	}
 	
+	//test function
+	public void DrawTestCoords(float[] m)
+	{
+	    // Enable generic vertex attribute array
+	    GLES20.glEnableVertexAttribArray(mPositionHandle);
+	    // Prepare the triangle coordinate data
+	    GLES20.glVertexAttribPointer(mPositionHandle, 3,
+	                                 GLES20.GL_FLOAT, false,
+	                                 0, tvb);
+	    // Enable generic vertex attribute array
+	    GLES20.glEnableVertexAttribArray ( mTexCoordLoc );
+	    
+	    // Prepare the texturecoordinates
+	    GLES20.glVertexAttribPointer ( mTexCoordLoc, 2, GLES20.GL_FLOAT,
+                false, 
+                0, uvBuffer);
+	    // Get handle to textures locations
+        mSamplerLoc = GLES20.glGetUniformLocation (riGraphicTools.sp_Image, "s_texture" ); 
+	    
+	    GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+	    GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 
+        		IDs.get(1)[0]);
+	    
+        // Apply the projection and view transformation
+        GLES20.glUniformMatrix4fv(mtrxhandle, 1, false, m, 0);       
+             
+        // Set the sampler texture unit to 0, where we have saved the texture.
+        GLES20.glUniform1i ( mSamplerLoc, 0);
+        // Draw the triangle
+        GLES20.glDrawElements(GLES20.GL_TRIANGLES, indices.length,
+                GLES20.GL_UNSIGNED_SHORT, drawListBuffer);
+        
+     // Disable vertex array
+        GLES20.glDisableVertexAttribArray(mPositionHandle);
+        GLES20.glDisableVertexAttribArray(mTexCoordLoc);
+	}
 
 	@Override
 	public void onSurfaceChanged(GL10 gl, int width, int height) {
@@ -216,7 +309,7 @@ public class GLRenderer implements Renderer {
 		SetupImage();
 		
 		// Set the clear color to black
-		GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1);	
+		GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		
 		//textures
 		for(int o=0;o<texCount;++o)
@@ -232,7 +325,7 @@ public class GLRenderer implements Renderer {
             Bitmap bmp = BitmapFactory.decodeResource(mContext.getResources(), id);
             GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bmp, 0);
     		bmp.recycle();
-		}
+		}    
 
 	    // Create the shaders, solid color
 	    int vertexShader = riGraphicTools.loadShader(GLES20.GL_VERTEX_SHADER, riGraphicTools.vs_SolidColor);
@@ -262,7 +355,7 @@ public class GLRenderer implements Renderer {
 		float ty = event.getY();
 		
 		if(touchEnabled){
-			textureIndx = 1 - textureIndx;
+			//textureIndx = 1 - textureIndx;
 			lastTouch = System.currentTimeMillis();
 			touchEnabled = false;
 		}
