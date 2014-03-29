@@ -3,6 +3,7 @@
 
     <string name="menu_back">Touch_Periodic</string>
     <string name="app_name">Touch_Periodic</string>
+    <string name="app_description">Touch_Periodic</string>
     <string name="action_settings">Settings</string>
     <string name="hello_world">Hello world!</string>
     <string name="button_start">Start</string>
