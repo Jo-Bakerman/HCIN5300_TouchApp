@@ -44,5 +44,12 @@ public class GLSurf extends GLSurfaceView {
 		mRenderer.processTouchEvent(e);
 		return true;
 	}
+	
+	public void onDestroy()
+	{
+        mRenderer.addExitLog();
+        
+        System.gc();
+	}
 
 }

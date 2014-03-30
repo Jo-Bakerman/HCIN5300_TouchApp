@@ -3,6 +3,7 @@ package groupB.hcin5300_touchapp;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.app.Activity;
+import android.util.Log;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.RelativeLayout;
@@ -48,6 +49,7 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onPause() {
 		finish();
+		((GLSurf) glSurfaceView).onDestroy();
 		super.onPause();
 		glSurfaceView.onPause();
 	}
