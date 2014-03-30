@@ -53,14 +53,10 @@ public class GLRenderer implements Renderer {
 	int mtrxhandle;
 	int mSamplerLoc;
 
-	boolean elementSelected = false;
-	int elementNo = -1;
-	int currLevel = 1;
-	int textureIndx = 0;	
-	int texCount = 12;
+	int texCount = 14;
 	String[] fileName = {"periodic_table4",
-			"ag1", "ag2", "ag3", "ag4", "ag5", //Ag texture range [1-5]
-			"pb1", "pb2", "pb3", "pb4", "pb5", //Pb texture range [6-10]
+			"ag1", "ag2", "ag3", "ag4", "ag5", "aggroup", //Ag texture range [1-6]
+			"pb1", "pb2", "pb3", "pb4", "pb5", "pbgroup", //Pb texture range [7-12]
 			"selection"};
 	Vector<int[]> IDs;
 	final int AG1 = 1;
@@ -68,11 +64,22 @@ public class GLRenderer implements Renderer {
 	final int AG3 = 3;
 	final int AG4 = 4;
 	final int AG5 = 5;
-	final int PB1 = 6;
-	final int PB2 = 7;
-	final int PB3 = 8;
-	final int PB4 = 9;
-	final int PB5 = 10;
+	final int AGG = 6;
+	final int PB1 = 7;
+	final int PB2 = 8;
+	final int PB3 = 9;
+	final int PB4 = 10;
+	final int PB5 = 11;
+	final int PBG = 12;
+	
+	final int PERIODIC = 0;
+	final int SELECTION = 13; //test variable
+	
+	boolean elementSelected = false;
+	int elementNo = -1;
+	int currLevel = -1;
+	int prevLevel = -1;
+	int textureIndx = PERIODIC;	
 	
 	// Our screenresolution
 	public static float mScreenWidth; // = 1280;
@@ -94,9 +101,10 @@ public class GLRenderer implements Renderer {
 	TouchCoords l3;
 	TouchCoords l4;
 	TouchCoords l5;
+	TouchCoords l6;
 	
     // Log File Variables
-    String participant = AboutScreen.message;
+    String participant = "ID"+AboutScreen.message;
     String filename = participant.replace(" ", "");
 	//Calendar cal = Calendar.getInstance();
 	
@@ -126,8 +134,9 @@ public class GLRenderer implements Renderer {
 		l1 = new TouchCoords(0.045f, 0.84f, 0.159f, 0.93f);
 		l2 = new TouchCoords(0.197f, 0.84f, 0.311f, 0.93f);
 		l3 = new TouchCoords(0.349f, 0.84f, 0.463f, 0.93f);
-		l4 = new TouchCoords(0.695f, 0.84f, 0.809f, 0.93f);
-		l5 = new TouchCoords(0.847f, 0.84f, 0.961f, 0.93f);
+		l4 = new TouchCoords(0.504f, 0.84f, 0.618f, 0.93f);
+		l5 = new TouchCoords(0.658f, 0.84f, 0.772f, 0.93f);
+		l6 = new TouchCoords(0.907f, 0.84f, 0.975f, 0.93f);
 	}
 	
 	public void loadBuffers()
@@ -150,10 +159,10 @@ public class GLRenderer implements Renderer {
 	//test function
 	public void testBuffers()
 	{
-		float l = pb.l;
-		float t = pb.tt;
-		float r = pb.r;
-		float b = pb.tb;
+		float l = l6.l;
+		float t = l6.tt;
+		float r = l6.r;
+		float b = l6.tb;
 		tv = new float[] {
 				l, t, 0.0f,
 				l, b, 0.0f,
@@ -268,7 +277,7 @@ public class GLRenderer implements Renderer {
 	    
 	    GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 	    GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 
-        		IDs.get(11)[0]);
+        		IDs.get(SELECTION)[0]);
 	    
         // Apply the projection and view transformation
         GLES20.glUniformMatrix4fv(mtrxhandle, 1, false, m, 0);       
@@ -373,7 +382,7 @@ public class GLRenderer implements Renderer {
         	Calendar cal = Calendar.getInstance();
         	String dateTime = cal.getTime().toString();
         	//dateTime += ":" + Integer.toString(cal.get(Calendar.SECOND));
-        	String fileHead = dateTime + "\n" + participant + "\n" + "Touch Test";
+        	String fileHead = "\n" + dateTime + "\n" + participant + "\n" + "Touch Test";
         	
         	FileWriter fw = new FileWriter(Environment.getExternalStoragePublicDirectory
         			(Environment.DIRECTORY_DOWNLOADS).toString() + "/" + filename + ".txt", true);
@@ -397,39 +406,7 @@ public class GLRenderer implements Renderer {
 				if(elementNo > 0){
 				//check if any of the buttons is pressed
 				int buttonSelected = getPressedButton(tx, ty);
-				switch(buttonSelected) //determine which level is selected
-				{
-				case 1:
-					textureIndx = elementNo == 1 ? AG1 : PB1;
-					if(currLevel != 1)
-		    			addLogEntry();
-					currLevel = 1;
-					break;
-				case 2: 
-					textureIndx = elementNo == 1 ? AG2 : PB2;
-					if(currLevel != 2)
-		    			addLogEntry();
-					currLevel = 2;
-					break;
-				case 3:
-					textureIndx = elementNo == 1 ? AG3 : PB3;
-					if(currLevel != 3)
-		    			addLogEntry();
-					currLevel = 3;
-					break;
-				case 4: 
-					textureIndx = elementNo == 1 ? AG4 : PB4;
-					if(currLevel != 4)
-		    			addLogEntry();
-					currLevel = 4;
-					break;
-				case 5:
-					textureIndx = elementNo == 1 ? AG5 : PB5;
-					if(currLevel != 5)
-		    			addLogEntry();
-					currLevel = 5;
-					break;
-				}
+				changeTextureIndex(buttonSelected);
 				}
 			}
 			else //check for element selection
@@ -484,6 +461,58 @@ public class GLRenderer implements Renderer {
 		}
 	}
 	
+	public void changeTextureIndex(int buttonSelected)
+	{
+		switch(buttonSelected) //determine which level is selected
+		{
+		case 1:
+			textureIndx = elementNo == 1 ? AG1 : PB1;
+			if(currLevel != 1)
+    			addLogEntry("");
+			currLevel = 1;
+			break;
+		case 2: 
+			textureIndx = elementNo == 1 ? AG2 : PB2;
+			if(currLevel != 2)
+    			addLogEntry("");
+			currLevel = 2;
+			break;
+		case 3:
+			textureIndx = elementNo == 1 ? AG3 : PB3;
+			if(currLevel != 3)
+    			addLogEntry("");
+			currLevel = 3;
+			break;
+		case 4: 
+			textureIndx = elementNo == 1 ? AG4 : PB4;
+			if(currLevel != 4)
+    			addLogEntry("");
+			currLevel = 4;
+			break;
+		case 5:
+			textureIndx = elementNo == 1 ? AG5 : PB5;
+			if(currLevel != 5)
+    			addLogEntry("");
+			currLevel = 5;
+			break;
+		case 6:
+			//if table view, exit to previous level
+			if(currLevel == 6){				
+				currLevel = prevLevel;
+				addLogEntry("exit table");
+				changeTextureIndex(currLevel);						
+			}
+			else //else go to table view
+			{					
+				textureIndx = elementNo == 1 ? AGG : PBG;
+				addLogEntry("");
+				prevLevel = currLevel;
+				currLevel = 6;		
+			}					
+			break;
+		}
+	}
+	
 	public int getPressedButton(float tx, float ty)
 	{
 		if(IsPressed(l1, tx, ty))
@@ -496,6 +525,8 @@ public class GLRenderer implements Renderer {
 			return 4;
 		if(IsPressed(l5, tx, ty))
 			return 5;
+		if(IsPressed(l6, tx, ty))
+			return 6;
 		
 		return 0; //nothing is pressed
 	}
@@ -537,17 +568,50 @@ public class GLRenderer implements Renderer {
 		drawListBuffer.position(0);
 	}
 	
-	private void addLogEntry()
+	private void addLogEntry(String state)
     {
+		String tmp = "";
+		if(state.equalsIgnoreCase("exit table"))
+			tmp = "Exiting the periodic table, back to level ";
+		else
+			tmp = "Exiting level ";
+		
+		String val = tmp + Integer.toString(currLevel); 
     	try
         {
 			// **** Stores Previous Level & End Time of Prev Level
 			Calendar cal = Calendar.getInstance();
 			String dateTime = cal.getTime().toString();
-			String newLine = dateTime + ", " + "Touch" + ", " + participant + ", " + Integer.toString(currLevel) + "\n";
+			String newLine = dateTime + ", " + "Touch" + ", " + participant + ", " + val + "\n";
 			
         	FileWriter fw = new FileWriter(Environment.getExternalStoragePublicDirectory
         			(Environment.DIRECTORY_DOWNLOADS).toString() + "/" + filename + ".txt", true);
+	        fw.append(newLine);
+	        fw.close();
+        } catch (Exception e) {
+        	Log.e("FileWriter","Did Not Create File2");
+        }
+    }
+	
+	public void addExitLog()
+    {
+		String tmp;
+		if(currLevel == 6)
+			tmp = "Exiting periodic table ";
+		else
+			tmp = "Exiting level " + Integer.toString(currLevel);
+    	try
+        {
+			// **** Stores Previous Level & End Time of Prev Level
+			Calendar cal = Calendar.getInstance();
+			String dateTime = cal.getTime().toString();
+			String newLine = dateTime + ", " + "Touch" + ", " + 
+					participant + ", " + tmp + 
+					" & closing application \n";
+			
+        	FileWriter fw = new FileWriter
+        			(Environment.getExternalStoragePublicDirectory
+        					(Environment.DIRECTORY_DOWNLOADS).toString() + "/" + filename + ".txt", true);
 	        fw.append(newLine);
 	        fw.close();
         } catch (Exception e) {
