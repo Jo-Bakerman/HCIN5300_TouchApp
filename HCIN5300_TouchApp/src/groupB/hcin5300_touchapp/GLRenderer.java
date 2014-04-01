@@ -128,7 +128,7 @@ public class GLRenderer implements Renderer {
 	
 	public void initTouchCoords()
 	{
-		//touch coordinates increase from top to left (unlike texture coordinates)
+		//touch coordinates increase from top to bottom (unlike texture coordinates)
 		ag = new TouchCoords(0.575f, 0.44f, 0.628f, 0.55f);
 		pb = new TouchCoords(0.729f, 0.546f, 0.782f, 0.656f);
 		l1 = new TouchCoords(0.045f, 0.84f, 0.159f, 0.93f);
